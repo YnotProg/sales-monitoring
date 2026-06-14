@@ -1,0 +1,2008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Sales Monitoring System - Cloud Sync</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            overflow: hidden;
+        }
+
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-box {
+            background: #16213e;
+            padding: 30px;
+            border-radius: 15px;
+            width: 350px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            border: 1px solid #0f3460;
+        }
+
+        .login-box h2 {
+            color: #0ff;
+            margin-bottom: 20px;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: #0f3460;
+            border: 1px solid #1a1a2e;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background: #00b894;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .login-box button:hover { opacity: 0.9; }
+        .login-box .exit-btn { background: #d63031; margin-top: 5px; }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .tab-bar {
+            display: flex;
+            background: #0f3460;
+            padding: 0 10px;
+            gap: 5px;
+            overflow-x: auto;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            background: #16213e;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            border-radius: 8px 8px 0 0;
+            font-size: 13px;
+        }
+
+        .tab-btn.active {
+            background: #1a1a2e;
+            color: #0ff;
+            border-bottom: 3px solid #0ff;
+        }
+
+        .tab-btn:hover { background: #1f3a5f; color: white; }
+
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #1a1a2e;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .card {
+            background: #16213e;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #0f3460;
+        }
+
+        .card h3 {
+            color: #0ff;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-left: 3px solid #0ff;
+            padding-left: 10px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .form-row label {
+            min-width: 80px;
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        input, select, button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #0f3460;
+            background: #0f3460;
+            color: white;
+            font-size: 13px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #0ff;
+        }
+
+        button {
+            background: #0f3460;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #1f3a5f;
+            transform: translateY(-1px);
+        }
+
+        button.primary { background: #00b894; }
+        button.primary:hover { background: #00a884; }
+        button.danger { background: #d63031; }
+        button.warning { background: #f39c12; }
+        button.info { background: #3498db; }
+        button.success { background: #27ae60; }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .data-table th, .data-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #0f3460;
+        }
+
+        .data-table th {
+            background: #0f3460;
+            color: #ff0;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+
+        .data-table tr:hover { background: #1f3a5f; }
+
+        .table-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .summary-bar {
+            background: #0f3460;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            border-top: 1px solid #1f3a5f;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .summary-text {
+            flex: 1;
+            font-weight: bold;
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .popup-box {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 10px;
+            min-width: 300px;
+            max-width: 500px;
+            text-align: center;
+            border: 1px solid #0ff;
+        }
+
+        .popup-box input, .popup-box textarea {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .popup-box textarea {
+            background: #0f3460;
+            border: 1px solid #0f3460;
+            border-radius: 6px;
+            color: white;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        .popup-box button {
+            margin: 5px;
+            padding: 8px 20px;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        .modal-content {
+            background: #16213e;
+            padding: 25px;
+            border-radius: 15px;
+            width: 350px;
+            border: 2px solid #0ff;
+        }
+
+        .modal-content h3 {
+            color: #0ff;
+            margin-bottom: 15px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .positive { color: #00ff88; }
+        .negative { color: #ff6b6b; }
+        .today-badge { color: #00ff88; font-weight: bold; }
+        .other-date { color: #f39c12; }
+
+        .denom-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .denom-item {
+            text-align: center;
+            background: #16213e;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .denom-item label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            color: #0ff;
+        }
+        .denom-item input {
+            width: 100%;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 10px;
+        }
+
+        .inline-add {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        
+        .inline-add button {
+            padding: 8px 12px;
+            white-space: nowrap;
+        }
+
+        .db-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-card {
+            background: #0f3460;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-card .number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0ff;
+        }
+        
+        .stat-card .label {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+        
+        .db-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .file-input-label {
+            background: #3498db;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            display: inline-block;
+        }
+        
+        .file-input-label:hover {
+            background: #2980b9;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+
+        input[type="date"] {
+            background: #0f3460;
+            color: white;
+            border: 1px solid #0f3460;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+        
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
+        .date-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #0f3460;
+        }
+        
+        .date-header h3 {
+            margin: 0;
+        }
+        
+        .date-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            background: #0f3460;
+        }
+        
+        .date-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-note {
+            background: #0f3460;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            margin-top: 10px;
+            border-left: 3px solid #f39c12;
+        }
+
+        .collection-summary {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .collection-summary div {
+            margin: 5px 0;
+        }
+
+        .badge-customer {
+            background: #3498db;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            display: inline-block;
+        }
+        
+        .badge-salesman {
+            background: #f39c12;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            display: inline-block;
+        }
+
+        .sync-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .sync-online { background-color: #00ff88; box-shadow: 0 0 5px #00ff88; }
+        .sync-offline { background-color: #ff6b6b; }
+        .sync-syncing { background-color: #f39c12; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        @media (max-width: 768px) {
+            .denom-grid { grid-template-columns: repeat(3, 1fr); }
+            .tab-btn { padding: 8px 12px; font-size: 11px; }
+            .form-row label { min-width: 70px; font-size: 11px; }
+            input, select, button { font-size: 11px; padding: 6px 8px; }
+            .inline-add button { padding: 6px 8px; }
+            .db-stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .date-header { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+    // ============= CONFIGURATION =============
+    // ============= SUPABASE CONFIGURATION =============
+    const SUPABASE_URL = 'https://djyjplbgwluiejbqdnqzf.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_AQ0831_-0VNsjVSwnBEFKQ_hL5Aj...';
+
+    var supabase = null; // Changed from 'let' to 'var' to fix browser crash
+    let syncStatus = 'offline';
+    let cloudEnabled = false;
+    
+    const defaultMarketsCustomers = {
+        'Banawa': ['Insik', 'Mambaling', 'Shell'],
+        'Bayanihan': ['Baya1', 'Baya2'],
+        'Bulacao': ['Bula'],
+        'Canduman': ['Zeta'],
+        'Casia': ['Perla', 'Axel', 'Ibo', 'Nena'],
+        'Centro': ['Wilma', 'Mameng', 'Manokan'],
+        'Fatima': ['Charlot', 'Que'],
+        'Generic': ['Vener', 'Jay'],
+        'Mabolo': ['Hipodromo', 'Alice', 'Tata', 'Lorna', 'Glyn', 'Ate', 'Ading'],
+        'Minglanilla': ['Eli', 'Lita', 'Bryle', 'PickNPay', 'Berlyn', 'Insik', 'Mia', 'Wenna', 'Chelsea',
+                    'Marissa', 'Esboy', 'Jung2', 'Jeje', 'Thelma', 'Wilmer', 'Maricris', 'Celia', 'Soraida',
+                    'Melds', 'Fe', 'Maryann', 'Jeng', 'Dalynn', 'Diday', 'Dante Store', 'Bong', 'Kezia',
+                    'Boni', 'Roland', 'Lim', 'Lily', 'Roel', 'Meli', 'Carmel', 'Aliyas', 'Wena', 'Alice'],
+        'Pusok': ['Jeje', 'Neneng', 'Beca', 'Kin', 'Fe'],
+        'Quiot': ['Nantes Store', 'Market'],
+        'Tabunok': ['Rose', 'Hazel', 'Walter', 'Joy', 'Toni', 'Necia', 'Sylvia', 'Tita', 'Dandan', 'Manokan', 
+                    'Lorie', 'Lani', 'Anacita', 'Cesar', 'Morie', 'Jeje', 'Mira', 'Arnold', 'Bebe', 'Rodel', 
+                    'Ginamos', 'Boy', 'Bekay', 'Kate', 'Imelda', 'Lourdes', 'Amanda'],
+        'Partner': ['Yobs', 'Flor']
+    };
+    
+    const defaultUsers = {
+        'Jay': { password: btoa('jay123'), role: 'salesman', name: 'Jay' },
+        'Vener': { password: btoa('vener123'), role: 'salesman', name: 'Vener' },
+        'Paolo': { password: btoa('paolo123'), role: 'salesman', name: 'Paolo' },
+        'admin': { password: btoa('admin123'), role: 'admin', name: 'Admin' }
+    };
+    
+    const productPrices = {
+        'Fresh Noodles(5kg)': 190,
+        'Fresh Noodles(1kg)': 38,
+        'Canton(500gm)': 80,
+        'Canton(1kg)': 160,
+        'Odong': 35,
+        'Misua': 35
+    };
+    
+    const STORAGE_KEYS = {
+        USERS: 'sales_users',
+        SALES: 'sales_records',
+        EXPENSES: 'expense_records',
+        SPOILAGE: 'spoilage_records',
+        COLLECTIONS: 'collection_records',
+        RECEIVABLES: 'receivable_records',
+        PAYMENTS: 'payment_records',
+        MARKETS_CUSTOMERS: 'markets_customers'
+    };
+    
+    function getToday() { return new Date().toISOString().split('T')[0]; }
+    function getTimestamp() { return new Date().toISOString().replace('T', ' ').slice(0, 19); }
+    function loadData(key) { const data = localStorage.getItem(key); return data ? JSON.parse(data) : []; }
+    function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+    
+    // ============= MARKETS & CUSTOMERS MANAGEMENT =============
+    function loadMarketsCustomers() {
+        const saved = localStorage.getItem(STORAGE_KEYS.MARKETS_CUSTOMERS);
+        if (saved) return JSON.parse(saved);
+        saveData(STORAGE_KEYS.MARKETS_CUSTOMERS, defaultMarketsCustomers);
+        return { ...defaultMarketsCustomers };
+    }
+    
+    function saveMarketsCustomers(data) { saveData(STORAGE_KEYS.MARKETS_CUSTOMERS, data); }
+    
+    function addNewMarket(marketName) {
+        const markets = loadMarketsCustomers();
+        if (!markets[marketName]) {
+            markets[marketName] = [];
+            saveMarketsCustomers(markets);
+            return true;
+        }
+        return false;
+    }
+    
+    function addNewCustomer(marketName, customerName) {
+        const markets = loadMarketsCustomers();
+        if (markets[marketName] && !markets[marketName].includes(customerName)) {
+            markets[marketName].push(customerName);
+            saveMarketsCustomers(markets);
+            return true;
+        }
+        return false;
+    }
+    
+    function getAllMarkets() {
+        return Object.keys(loadMarketsCustomers());
+    }
+    
+    function getCustomers(marketName) {
+        return loadMarketsCustomers()[marketName] || [];
+    }
+    
+    // ============= APP GLOBAL STATE =============
+    let currentUser = null;
+    let userRole = null;
+    let currentDate = getToday();
+    let currentSalesman = 'Jay';
+    let editingSaleId = -1;
+    let reportType = 'daily';
+    let reportDate = getToday();
+    let reportMonth = new Date().getMonth();
+    let reportYear = new Date().getFullYear();
+    
+    // ============= HELPER FUNCTIONS =============
+    function showMessage(title, message, isError = false, duration = 3000) {
+        const popup = document.createElement('div');
+        popup.className = 'popup-overlay';
+        popup.innerHTML = `<div class="popup-box"><h3 style="color: ${isError ? '#ff6b6b' : '#0ff'}">${title}</h3><p style="white-space: pre-line;">${message}</p><button onclick="this.closest('.popup-overlay').remove()">OK</button></div>`;
+        document.body.appendChild(popup);
+        setTimeout(() => { if (popup.parentNode) popup.remove(); }, duration);
+    }
+    
+    function isToday(dateString) { return dateString === getToday(); }
+    
+    async function onDateChange() {
+        const dateInput = document.getElementById('global-date-picker');
+        if (dateInput && dateInput.value) {
+            currentDate = dateInput.value;
+            reportDate = currentDate;
+            await updateAllDateDisplays();
+            await refreshAll();
+            await generateReport();
+            showMessage('Date Changed', `Now viewing data for: ${currentDate}${isToday(currentDate) ? ' (TODAY)' : ''}`);
+        }
+    }
+    
+    async function updateAllDateDisplays() {
+        const datePicker = document.getElementById('global-date-picker');
+        if (datePicker) datePicker.value = currentDate;
+        const reportDatePicker = document.getElementById('report-date');
+        if (reportDatePicker) reportDatePicker.value = currentDate;
+        const dateDisplays = document.querySelectorAll('.current-date-display');
+        dateDisplays.forEach(display => { display.textContent = currentDate; });
+        const badges = document.querySelectorAll('.date-badge');
+        badges.forEach(badge => {
+            if (isToday(currentDate)) {
+                badge.innerHTML = '✅ TODAY';
+                badge.className = 'date-badge today-badge';
+            } else {
+                badge.innerHTML = '📅 VIEWING: ' + currentDate;
+                badge.className = 'date-badge other-date';
+            }
+        });
+    }
+    
+    // ============= SALES TAB FUNCTIONS =============
+    async function refreshSalesDisplay() {
+        const sales = loadData(STORAGE_KEYS.SALES).filter(s => s.date === currentDate && s.salesman === currentSalesman);
+        const tbody = document.getElementById('sales-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        let totalSales = 0;
+        sales.forEach(sale => {
+            const amount = sale.price * sale.qty;
+            totalSales += amount;
+            const row = tbody.insertRow();
+            row.insertCell(0).textContent = sale.customer;
+            row.insertCell(1).textContent = sale.product;
+            row.insertCell(2).textContent = sale.qty;
+            row.insertCell(3).textContent = `₱${amount.toFixed(2)}`;
+            const editBtn = document.createElement('button');
+            editBtn.textContent = '✏️ Edit';
+            editBtn.style.padding = '4px 8px';
+            editBtn.style.fontSize = '11px';
+            editBtn.onclick = () => loadSaleForEdit(sale.id);
+            const cell = row.insertCell(4);
+            cell.appendChild(editBtn);
+        });
+        if(document.getElementById('sales-total-display')) {
+            document.getElementById('sales-total-display').innerHTML = `<strong>Total Sales: ₱${totalSales.toFixed(2)}</strong>`;
+        }
+    }
+    
+    async function loadSaleForEdit(id) {
+        const sales = loadData(STORAGE_KEYS.SALES).filter(s => s.date === currentDate && s.salesman === currentSalesman);
+        const sale = sales.find(s => s.id === id);
+        if (sale) {
+            document.getElementById('sale-market').value = sale.market || Object.keys(loadMarketsCustomers())[0];
+            await updateCustomerList();
+            document.getElementById('sale-customer').value = sale.customer;
+            document.getElementById('sale-product').value = sale.product;
+            document.getElementById('sale-price').value = sale.price;
+            document.getElementById('sale-qty').value = sale.qty;
+            editingSaleId = id;
+            document.getElementById('save-sale-btn').innerHTML = '✏️ UPDATE SALE';
+        }
+    }
+    
+    async function addOrUpdateSale() {
+        const customer = document.getElementById('sale-customer').value;
+        const market = document.getElementById('sale-market').value;
+        const product = document.getElementById('sale-product').value;
+        const price = parseFloat(document.getElementById('sale-price').value);
+        const qty = parseInt(document.getElementById('sale-qty').value);
+        
+        if (!customer || customer === 'Select Customer') {
+            showMessage('Warning', 'Please select a customer');
+            return;
+        }
+        if (qty <= 0 || price <= 0) {
+            showMessage('Warning', 'Please enter valid quantity and price');
+            return;
+        }
+        
+        const sales = loadData(STORAGE_KEYS.SALES);
+        
+        if (editingSaleId === -1) {
+            const newSale = {
+                id: Date.now(),
+                date: currentDate,
+                salesman: currentSalesman,
+                market: market,
+                customer: customer,
+                product: product,
+                price: price,
+                qty: qty,
+                timestamp: getTimestamp()
+            };
+            sales.push(newSale);
+            saveData(STORAGE_KEYS.SALES, sales);
+            showMessage('Success', 'Sale saved successfully!');
+        } else {
+            const index = sales.findIndex(s => s.id === editingSaleId);
+            if (index !== -1) {
+                sales[index] = { ...sales[index], market, customer, product, price, qty };
+                saveData(STORAGE_KEYS.SALES, sales);
+            }
+            editingSaleId = -1;
+            document.getElementById('save-sale-btn').innerHTML = '💾 SAVE SALE';
+            showMessage('Success', 'Sale updated successfully!');
+        }
+        
+        document.getElementById('sale-customer').value = 'Select Customer';
+        document.getElementById('sale-qty').value = '0';
+        document.getElementById('sale-price').value = '38';
+        
+        await refreshSalesDisplay();
+        await updateSummaryBar();
+    }
+    
+    async function updateCustomerList() {
+        const market = document.getElementById('sale-market').value;
+        const customers = getCustomers(market);
+        const customerSelect = document.getElementById('sale-customer');
+        customerSelect.innerHTML = '<option>Select Customer</option>';
+        customers.forEach(c => {
+            const option = document.createElement('option');
+            option.value = c;
+            option.textContent = c;
+            customerSelect.appendChild(option);
+        });
+    }
+    
+    function updateProductPrice() {
+        const product = document.getElementById('sale-product').value;
+        const price = productPrices[product] || 0;
+        document.getElementById('sale-price').value = price;
+    }
+    
+    function updateSalesmanView() {
+        if (userRole === 'admin') {
+            currentSalesman = document.getElementById('sale-salesman-select').value;
+            refreshAll();
+        }
+    }
+    
+    // ============= EXPENSES TAB FUNCTIONS =============
+    const deliveryItems = ['Meals', 'Parking Fee', 'Toll Pay', 'Tires', 'Motor Oil', 'Spare parts', 'Diesel', 'Others'];
+    const incurredItems = ['Salt', 'F. color', 'Poly bags', 'Sodas', 'C.Starch', 'Firewood', 'Snacks', 'Others'];
+    
+    function updateExpenseItems() {
+        const type = document.getElementById('expense-type').value;
+        const itemSelect = document.getElementById('expense-item');
+        const items = type === 'Delivery' ? deliveryItems : incurredItems;
+        itemSelect.innerHTML = '';
+        items.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item;
+            option.textContent = item;
+            itemSelect.appendChild(option);
+        });
+    }
+    
+    async function addExpense() {
+        const type = document.getElementById('expense-type').value;
+        const item = document.getElementById('expense-item').value;
+        const amount = parseFloat(document.getElementById('expense-amount').value);
+        
+        if (isNaN(amount) || amount <= 0) {
+            showMessage('Warning', 'Please enter a valid amount');
+            return;
+        }
+        
+        const expenses = loadData(STORAGE_KEYS.EXPENSES);
+        const newExpense = {
+            id: Date.now(),
+            date: currentDate,
+            salesman: currentSalesman,
+            category: type,
+            item: item,
+            amount: amount,
+            timestamp: getTimestamp()
+        };
+        expenses.push(newExpense);
+        saveData(STORAGE_KEYS.EXPENSES, expenses);
+        
+        document.getElementById('expense-amount').value = '';
+        await refreshExpensesDisplay();
+        await updateSummaryBar();
+        showMessage('Success', 'Expense saved!');
+    }
+    
+    async function refreshExpensesDisplay() {
+        const expenses = loadData(STORAGE_KEYS.EXPENSES).filter(e => e.date === currentDate && e.salesman === currentSalesman);
+        const tbody = document.getElementById('expenses-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        let totalExpenses = 0;
+        expenses.forEach(exp => {
+            totalExpenses += exp.amount;
+            const row = tbody.insertRow();
+            row.insertCell(0).textContent = exp.category;
+            row.insertCell(1).textContent = exp.item;
+            row.insertCell(2).textContent = `₱${exp.amount.toFixed(2)}`;
+            row.insertCell(3).textContent = exp.date;
+            const delBtn = document.createElement('button');
+            delBtn.textContent = '🗑️ Delete';
+            delBtn.className = 'danger';
+            delBtn.style.padding = '4px 8px';
+            delBtn.style.fontSize = '11px';
+            delBtn.onclick = () => deleteExpenseHandler(exp.id);
+            const cell = row.insertCell(4);
+            cell.appendChild(delBtn);
+        });
+        if(document.getElementById('expenses-total')) {
+            document.getElementById('expenses-total').innerHTML = `<strong>Total Expenses: ₱${totalExpenses.toFixed(2)}</strong>`;
+        }
+    }
+    
+    async function deleteExpenseHandler(id) {
+        let expenses = loadData(STORAGE_KEYS.EXPENSES);
+        expenses = expenses.filter(e => e.id !== id);
+        saveData(STORAGE_KEYS.EXPENSES, expenses);
+        await refreshExpensesDisplay();
+        await updateSummaryBar();
+        showMessage('Success', 'Expense deleted');
+    }
+    
+    // ============= SPOILAGE TAB FUNCTIONS =============
+    async function addSpoilage() {
+        const product = document.getElementById('spoilage-product').value;
+        const qty = parseFloat(document.getElementById('spoilage-qty').value);
+        const cost = parseFloat(document.getElementById('spoilage-cost').value);
+        const reason = document.getElementById('spoilage-reason').value;
+        
+        if (qty <= 0 || cost <= 0) {
+            showMessage('Warning', 'Please enter valid quantity and pack cost');
+            return;
+        }
+        
+        const totalLoss = qty * cost;
+        const spoilage = loadData(STORAGE_KEYS.SPOILAGE);
+        const newSpoilage = {
+            id: Date.now(),
+            date: currentDate,
+            salesman: currentSalesman,
+            product: product,
+            quantity: qty,
+            cost_per_pack: cost,
+            total_loss: totalLoss,
+            reason: reason,
+            timestamp: getTimestamp()
+        };
+        spoilage.push(newSpoilage);
+        saveData(STORAGE_KEYS.SPOILAGE, spoilage);
+        
+        document.getElementById('spoilage-qty').value = '0';
+        await refreshSpoilageDisplay();
+        await updateSummaryBar();
+        showMessage('Success', 'Spoilage recorded');
+    }
+    
+    async function refreshSpoilageDisplay() {
+        const spoilage = loadData(STORAGE_KEYS.SPOILAGE).filter(s => s.date === currentDate && s.salesman === currentSalesman);
+        const tbody = document.getElementById('spoilage-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        let totalQty = 0, totalLoss = 0;
+        spoilage.forEach(s => {
+            totalQty += s.quantity;
+            totalLoss += s.total_loss;
+            const row = tbody.insertRow();
+            row.insertCell(0).textContent = s.product;
+            row.insertCell(1).textContent = s.quantity.toFixed(2);
+            row.insertCell(2).textContent = `₱${s.total_loss.toFixed(2)}`;
+            row.insertCell(3).textContent = s.reason;
+            const delBtn = document.createElement('button');
+            delBtn.textContent = '🗑️';
+            delBtn.className = 'danger';
+            delBtn.style.padding = '4px 8px';
+            delBtn.onclick = () => deleteSpoilageHandler(s.id);
+            const cell = row.insertCell(4);
+            cell.appendChild(delBtn);
+        });
+        if(document.getElementById('total-spoilage-qty')) document.getElementById('total-spoilage-qty').innerHTML = `📊 Total Spoilage: ${totalQty.toFixed(2)} packs`;
+        if(document.getElementById('total-spoilage-loss')) document.getElementById('total-spoilage-loss').innerHTML = `💰 Total Loss: ₱${totalLoss.toFixed(2)}`;
+    }
+    
+    async function deleteSpoilageHandler(id) {
+        let spoilage = loadData(STORAGE_KEYS.SPOILAGE);
+        spoilage = spoilage.filter(s => s.id !== id);
+        saveData(STORAGE_KEYS.SPOILAGE, spoilage);
+        await refreshSpoilageDisplay();
+        await updateSummaryBar();
+        showMessage('Success', 'Spoilage deleted');
+    }
+    
+    // ============= CASH COLLECTION TAB FUNCTIONS =============
+    const denominations = [1000, 500, 200, 100, 50, 20, 10, 5, 1];
+    
+    async function updateCollectionTotal() {
+        let total = 0;
+        denominations.forEach(denom => {
+            const input = document.getElementById(`denom-${denom}`);
+            if (input) {
+                const count = parseInt(input.value) || 0;
+                total += count * denom;
+            }
+        });
+        if(document.getElementById('total-collected')) document.getElementById('total-collected').innerHTML = `💰 TOTAL COLLECTED: ₱${total.toFixed(2)}`;
+        
+        const sales = loadData(STORAGE_KEYS.SALES).filter(s => s.date === currentDate && s.salesman === currentSalesman);
+        const expenses = loadData(STORAGE_KEYS.EXPENSES).filter(e => e.date === currentDate && e.salesman === currentSalesman);
+        const spoilage = loadData(STORAGE_KEYS.SPOILAGE).filter(s => s.date === currentDate && s.salesman === currentSalesman);
+        
+        const totalSales = sales.reduce((sum, s) => sum + (s.price * s.qty), 0);
+        const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+        const totalSpoilageLoss = spoilage.reduce((sum, s) => sum + s.total_loss, 0);
+        
+        const expectedCash = totalSales - totalExpenses - totalSpoilageLoss;
+        const difference = total - expectedCash;
+        
+        if(document.getElementById('expected-cash')) document.getElementById('expected-cash').innerHTML = `📊 Expected Cash: ₱${expectedCash.toFixed(2)}`;
+        if(document.getElementById('spoilage-deduction')) document.getElementById('spoilage-deduction').innerHTML = `📉 Less Spoilage: ₱${totalSpoilageLoss.toFixed(2)}`;
+        
+        const diffElem = document.getElementById('difference');
+        if (diffElem) {
+            diffElem.innerHTML = `Difference: ₱${difference.toFixed(2)}`;
+            diffElem.className = difference >= 0 ? 'positive' : 'negative';
+        }
+        
+        const statusElem = document.getElementById('collection-status');
+        if (statusElem) {
+            if (difference > 0) {
+                statusElem.innerHTML = `✅ OVER by ₱${difference.toFixed(2)}`;
+                statusElem.className = 'positive';
+            } else if (difference < 0) {
+                statusElem.innerHTML = `⚠️ SHORT by ₱${Math.abs(difference).toFixed(2)}`;
+                statusElem.className = 'negative';
+            } else {
+                statusElem.innerHTML = '✅ EXACT MATCH';
+                statusElem.className = 'positive';
+            }
+        }
+    }
+    
+    async function saveCollectionHandler() {
+        const collectionData = {};
+        let total = 0;
+        denominations.forEach(denom => {
+            const count = parseInt(document.getElementById(`denom-${denom}`).value) || 0;
+            if (count > 0) collectionData[denom] = count;
+            total += count * denom;
+        });
+        
+        if (total === 0) {
+            showMessage('Warning', 'No collection data to save');
+            return;
+        }
+        
+        const collections = loadData(STORAGE_KEYS.COLLECTIONS);
+        const existingIndex = collections.findIndex(c => c.date === currentDate && c.salesman === currentSalesman);
+        
+        if (existingIndex !== -1) {
+            collections[existingIndex] = {
+                ...collections[existingIndex],
+                denominations: collectionData,
+                total_amount: total,
+                timestamp: getTimestamp()
+            };
+            saveData(STORAGE_KEYS.COLLECTIONS, collections);
+            showMessage('Success', `Collection UPDATED: ₱${total.toFixed(2)}`);
+        } else {
+            const newCollection = {
+                id: Date.now(),
+                date: currentDate,
+                salesman: currentSalesman,
+                denominations: collectionData,
+                total_amount: total,
+                timestamp: getTimestamp()
+            };
+            collections.push(newCollection);
+            saveData(STORAGE_KEYS.COLLECTIONS, collections);
+            showMessage('Success', `Collection SAVED: ₱${total.toFixed(2)}`);
+        }
+        
+        resetCollection();
+        await refreshCollectionsDisplay();
+        await updateSummaryBar();
+    }
+    
+    async function refreshCollectionsDisplay() {
+        const collections = loadData(STORAGE_KEYS.COLLECTIONS).filter(c => c.date === currentDate && c.salesman === currentSalesman);
+        const tbody = document.getElementById('collections-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        collections.forEach(c => {
+            const row = tbody.insertRow();
+            row.insertCell(0).textContent = c.date;
+            row.insertCell(1).textContent = `₱${c.total_amount.toFixed(2)}`;
+            row.insertCell(2).textContent = c.timestamp?.split(' ')[1] || '';
+        });
+    }
+    
+    function resetCollection() {
+        denominations.forEach(denom => {
+            const input = document.getElementById(`denom-${denom}`);
+            if (input) input.value = '0';
+        });
+        updateCollectionTotal();
+    }
+    
+    // ============= RECEIVABLES TAB FUNCTIONS =============
+    async function addReceivable() {
+        const type = document.getElementById('receivable-type').value;
+        const name = document.getElementById('receivable-name').value;
+        const amount = parseFloat(document.getElementById('receivable-amount').value);
+        const notes = document.getElementById('receivable-notes').value;
+        
+        if (!name || name === 'Select Name' || name === 'Select Customer' || name === 'Select Salesman') {
+            showMessage('Warning', 'Please select a valid target profile name');
+            return;
+        }
+        if (isNaN(amount) || amount <= 0) {
+            showMessage('Warning', 'Please enter a valid asset receivable amount');
+            return;
+        }
+        
+        const receivables = loadData(STORAGE_KEYS.RECEIVABLES);
+        const newReceivable = {
+            id: Date.now(),
+            date: currentDate,
+            salesman: currentSalesman,
+            type: type,
+            name: name,
+            amount_owed: amount,
+            amount_paid: 0,
+            balance: amount,
+            status: 'UNPAID',
+            notes: notes || (type === 'CUSTOMER' ? 'Customer regular ledger balance' : 'Salesman cash profile shortage variance'),
+            timestamp: getTimestamp()
+        };
+        receivables.push(newReceivable);
+        saveData(STORAGE_KEYS.RECEIVABLES, receivables);
+        
+        document.getElementById('receivable-amount').value = '';
+        document.getElementById('receivable-notes').value = '';
+        await refreshReceivablesDisplay();
+        showMessage('Success', `${type} balance tracked for ${name}`);
+    }
+    
+    async function refreshReceivablesDisplay() {
+        const receivables = loadData(STORAGE_KEYS.RECEIVABLES).filter(r => r.salesman === currentSalesman && r.balance > 0);
+        const tbody = document.getElementById('receivables-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        let totalUnpaid = 0;
+        
+        if (receivables.length === 0) {
+            const row = tbody.insertRow();
+            const cell = row.insertCell(0);
+            cell.colSpan = 9;
+            cell.textContent = 'No running active receivables accounts found.';
+            cell.style.textAlign = 'center';
+            cell.style.color = '#aaa';
+            cell.style.padding = '15px';
+        } else {
+            receivables.forEach(r => {
+                totalUnpaid += r.balance;
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = r.date;
+                row.insertCell(1).innerHTML = `<span class="${r.type === 'CUSTOMER' ? 'badge-customer' : 'badge-salesman'}">${r.type}</span>`;
+                row.insertCell(2).textContent = r.name;
+                row.insertCell(3).textContent = `₱${r.amount_owed.toFixed(2)}`;
+                row.insertCell(4).textContent = `₱${r.amount_paid.toFixed(2)}`;
+                row.insertCell(5).textContent = `₱${r.balance.toFixed(2)}`;
+                row.insertCell(6).textContent = r.notes || '-';
+                
+                const statusCell = row.insertCell(7);
+                statusCell.textContent = r.status;
+                if (r.status === 'PAID') statusCell.style.color = '#00ff88';
+                else if (r.status === 'PARTIAL') statusCell.style.color = '#f39c12';
+                else statusCell.style.color = '#ff6b6b';
+                
+                const payBtn = document.createElement('button');
+                payBtn.textContent = '💰 Pay';
+                payBtn.className = 'primary';
+                payBtn.style.padding = '4px 8px';
+                payBtn.style.fontSize = '11px';
+                payBtn.onclick = () => showPaymentDialog(r.id, r.name, r.balance);
+                const cell = row.insertCell(8);
+                cell.appendChild(payBtn);
+            });
+        }
+        if(document.getElementById('total-receivables')) {
+            document.getElementById('total-receivables').innerHTML = `<strong>Total Outstanding Receivables: ₱${totalUnpaid.toFixed(2)}</strong>`;
+        }
+    }
+    
+    function showPaymentDialog(id, name, balance) {
+        const popup = document.createElement('div');
+        popup.className = 'popup-overlay';
+        popup.innerHTML = `
+            <div class="popup-box">
+                <h3>Record Payment Transaction</h3>
+                <p style="margin: 10px 0;">Account Profile: <strong>${name}</strong></p>
+                <p style="margin-bottom: 15px;">Balance Due: <strong class="negative">₱${balance.toFixed(2)}</strong></p>
+                <div class="form-row" style="justify-content:center;">
+                    <label>Amount:</label>
+                    <input type="number" id="payment-amount" step="0.01" value="${balance}" style="width:150px; text-align:center;">
+                </div>
+                <button class="primary" onclick="processPayment(${id}, ${balance})">Post Payment</button>
+                <button onclick="this.closest('.popup-overlay').remove()">Cancel</button>
+            </div>`;
+        document.body.appendChild(popup);
+    }
+    
+    async function processPayment(receivableId, maxAmount) {
+        const amount = parseFloat(document.getElementById('payment-amount').value);
+        if (isNaN(amount) || amount <= 0) {
+            showMessage('Warning', 'Please specify a valid financial ledger numeric payment value');
+            return;
+        }
+        
+        const paymentAmount = Math.min(amount, maxAmount);
+        const receivables = loadData(STORAGE_KEYS.RECEIVABLES);
+        const index = receivables.findIndex(r => r.id === receivableId);
+        
+        if (index !== -1) {
+            const r = receivables[index];
+            r.amount_paid += paymentAmount;
+            r.balance = r.amount_owed - r.amount_paid;
+            r.status = r.balance <= 0 ? 'PAID' : 'PARTIAL';
+            saveData(STORAGE_KEYS.RECEIVABLES, receivables);
+            
+            const payments = loadData(STORAGE_KEYS.PAYMENTS);
+            payments.push({
+                id: Date.now(),
+                date: currentDate,
+                salesman: currentSalesman,
+                name: r.name,
+                receivable_id: receivableId,
+                amount: paymentAmount,
+                timestamp: getTimestamp()
+            });
+            saveData(STORAGE_KEYS.PAYMENTS, payments);
+            
+            document.querySelector('.popup-overlay')?.remove();
+            await refreshReceivablesDisplay();
+            await updateSummaryBar();
+            showMessage('Success', `Payment of ₱${paymentAmount.toFixed(2)} posted successfully!`);
+        }
+    }
+    
+    async function updateReceivableNameOptions() {
+        const type = document.getElementById('receivable-type').value;
+        const nameSelect = document.getElementById('receivable-name');
+        if (!nameSelect) return;
+        
+        if (type === 'CUSTOMER') {
+            const allCustomers = new Set();
+            const markets = loadMarketsCustomers();
+            Object.values(markets).forEach(customers => {
+                customers.forEach(c => allCustomers.add(c));
+            });
+            nameSelect.innerHTML = '<option>Select Customer</option>';
+            Array.from(allCustomers).sort().forEach(c => {
+                const option = document.createElement('option');
+                option.value = c;
+                option.textContent = c;
+                nameSelect.appendChild(option);
+            });
+            const option = document.createElement('option');
+            option.value = '__CUSTOM__';
+            option.textContent = '➕ Add new customer element profile...';
+            nameSelect.appendChild(option);
+        } else {
+            nameSelect.innerHTML = '<option>Select Salesman</option>';
+            ['Jay', 'Vener', 'Paolo'].forEach(s => {
+                const option = document.createElement('option');
+                option.value = s;
+                option.textContent = s;
+                nameSelect.appendChild(option);
+            });
+        }
+    }
+    
+    async function handleReceivableNameChange() {
+        const nameSelect = document.getElementById('receivable-name');
+        if (nameSelect.value === '__CUSTOM__') {
+            const newName = prompt('Enter new customer target system profile identity:');
+            if (newName && newName.trim()) {
+                addNewCustomer('Generic', newName.trim());
+                await updateReceivableNameOptions();
+                nameSelect.value = newName.trim();
+                showMessage('Success', `Customer "${newName.trim()}" linked onto Generic business registry`);
+            } else {
+                nameSelect.value = '';
+            }
+        }
+    }
+    
+    // ============= REPORT TAB FUNCTIONS =============
+    function toggleReportType() {
+        reportType = document.getElementById('report-type-toggle').value;
+        document.getElementById('daily-report-selectors').style.display = reportType === 'daily' ? 'flex' : 'none';
+        document.getElementById('monthly-report-selectors').style.display = reportType === 'monthly' ? 'flex' : 'none';
+        generateReport();
+    }
+    
+    function setReportDate(val) { if(val){ reportDate = val; generateReport(); } }
+    function setReportMonth(val) { reportMonth = parseInt(val); generateReport(); }
+    function setReportYear(val) { reportYear = parseInt(val); generateReport(); }
+    
+    async function generateReport() {
+        if (reportType === 'daily') await generateDailyReport();
+        else await generateMonthlyReport();
+    }
+    
+    async function generateDailyReport() {
+        let salesmen = (userRole === 'admin') ? ['Jay', 'Vener', 'Paolo'] : [currentSalesman];
+        const sales = loadData(STORAGE_KEYS.SALES);
+        const expenses = loadData(STORAGE_KEYS.EXPENSES);
+        const spoilage = loadData(STORAGE_KEYS.SPOILAGE);
+        const collections = loadData(STORAGE_KEYS.COLLECTIONS);
+        
+        let reportHtml = `
+            <div style="background:#0f3460; padding:15px; border-radius:8px; font-family:monospace;">
+                <div style="text-align:center; margin-bottom:20px">
+                    <h2 style="color:#0ff">DAILY PERFORMANCE REPORT</h2>
+                    <h3>Target Date: ${reportDate}</h3>
+                    <p>Generated Timestamp: ${getTimestamp()}</p>
+                </div>
+                <table style="width:100%; border-collapse:collapse; margin-bottom:20px">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left; padding:8px; background:#16213e; color:#ff0">Salesman</th>
+                            <th style="text-align:right; padding:8px; background:#16213e; color:#ff0">Gross Sales</th>
+                            <th style="text-align:right; padding:8px; background:#16213e; color:#ff0">Expenses</th>
+                            <th style="text-align:right; padding:8px; background:#16213e; color:#ff0">Spoilage Loss</th>
+                            <th style="text-align:right; padding:8px; background:#16213e; color:#ff0">Collected Cash</th>
+                            <th style="text-align:right; padding:8px; background:#16213e; color:#ff0">Variance Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+                    
+        let totalSales = 0, totalExpenses = 0, totalSpoilage = 0, totalCollected = 0;
+        
+        salesmen.forEach(salesman => {
+            const sSales = sales.filter(s => s.date === reportDate && s.salesman === salesman).reduce((sum, s) => sum + (s.price * s.qty), 0);
+            const sExpenses = expenses.filter(e => e.date === reportDate && e.salesman === salesman).reduce((sum, e) => sum + e.amount, 0);
+            const sSpoilage = spoilage.filter(s => s.date === reportDate && s.salesman === salesman).reduce((sum, s) => sum + s.total_loss, 0);
+            const sCollected = collections.filter(c => c.date === reportDate && c.salesman === salesman).reduce((sum, c) => sum + c.total_amount, 0);
+            
+            totalSales += sSales;
+            totalExpenses += sExpenses;
+            totalSpoilage += sSpoilage;
+            totalCollected += sCollected;
+            
+            const expected = sSales - sExpenses - sSpoilage;
+            const variance = sCollected - expected;
+            
+            reportHtml += `
+                <tr>
+                    <td style="padding:8px; border-bottom:1px solid #16213e;">${salesman}</td>
+                    <td style="text-align:right; padding:8px; border-bottom:1px solid #16213e;">₱${sSales.toFixed(2)}</td>
+                    <td style="text-align:right; padding:8px; border-bottom:1px solid #16213e;">₱${sExpenses.toFixed(2)}</td>
+                    <td style="text-align:right; padding:8px; border-bottom:1px solid #16213e;">₱${sSpoilage.toFixed(2)}</td>
+                    <td style="text-align:right; padding:8px; border-bottom:1px solid #16213e;">₱${sCollected.toFixed(2)}</td>
+                    <td style="text-align:right; padding:8px; border-bottom:1px solid #16213e; color:${variance >= 0 ? '#00ff88' : '#ff6b6b'}">₱${variance.toFixed(2)}</td>
+                </tr>`;
+        });
+        
+        const overallExpected = totalSales - totalExpenses - totalSpoilage;
+        const overallVariance = totalCollected - overallExpected;
+        
+        reportHtml += `
+                    <tr style="font-weight:bold; background:#16213e;">
+                        <td style="padding:10px;">CONSOLIDATED</td>
+                        <td style="text-align:right; padding:10px; color:#0ff;">₱${totalSales.toFixed(2)}</td>
+                        <td style="text-align:right; padding:10px; color:#ff6b6b;">₱${totalExpenses.toFixed(2)}</td>
+                        <td style="text-align:right; padding:10px; color:#f39c12;">₱${totalSpoilage.toFixed(2)}</td>
+                        <td style="text-align:right; padding:10px; color:#00ff88;">₱${totalCollected.toFixed(2)}</td>
+                        <td style="text-align:right; padding:10px; color:${overallVariance >= 0 ? '#00ff88' : '#ff6b6b'}">₱${overallVariance.toFixed(2)}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>`;
+        
+        const reportDiv = document.getElementById('report-output-container');
+        if (reportDiv) reportDiv.innerHTML = reportHtml;
+    }
+    
+    async function generateMonthlyReport() {
+        const sales = loadData(STORAGE_KEYS.SALES);
+        const expenses = loadData(STORAGE_KEYS.EXPENSES);
+        const spoilage = loadData(STORAGE_KEYS.SPOILAGE);
+        const collections = loadData(STORAGE_KEYS.COLLECTIONS);
+        
+        const targetPrefix = `${reportYear}-${String(reportMonth + 1).padStart(2, '0')}`;
+        let salesmen = (userRole === 'admin') ? ['Jay', 'Vener', 'Paolo'] : [currentSalesman];
+        
+        let reportHtml = `
+            <div style="background:#0f3460; padding:15px; border-radius:8px; font-family:monospace;">
+                <div style="text-align:center; margin-bottom:20px">
+                    <h2 style="color:#0ff">MONTHLY CONSOLIDATED BUSINESS INSIGHTS</h2>
+                    <h3>Target Month Period: ${targetPrefix}</h3>
+                    <p>Generated Timestamp: ${getTimestamp()}</p>
+                </div>
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left; padding:8px; background:#16213e; color:#ff0">Salesman profile</th>
+                            <th style="text-align:right; padding:8px; background:#16213e; color:#ff0">Sales Accum.</th>
+                            <th style="text-align:right; padding:8px; background:#16213e; color:#ff0">Expenses Agg.</th>
+                            <th style="text-align:right; padding:8px; background:#16213e; color:#ff0">Spoilage Totals</th>
+                            <th style="text-align:right; padding:8px; background:#16213e; color:#ff0">Cash Audited</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+                    
+        let totalSales = 0, totalExpenses = 0, totalSpoilage = 0, totalCollected = 0;
+        
+        salesmen.forEach(salesman => {
+            const sSales = sales.filter(s => s.date.startsWith(targetPrefix) && s.salesman === salesman).reduce((sum, s) => sum + (s.price * s.qty), 0);
+            const sExpenses = expenses.filter(e => e.date.startsWith(targetPrefix) && e.salesman === salesman).reduce((sum, e) => sum + e.amount, 0);
+            const sSpoilage = spoilage.filter(s => s.date.startsWith(targetPrefix) && s.salesman === salesman).reduce((sum, s) => sum + s.total_loss, 0);
+            const sCollected = collections.filter(c => c.date.startsWith(targetPrefix) && c.salesman === salesman).reduce((sum, c) => sum + c.total_amount, 0);
+            
+            totalSales += sSales;
+            totalExpenses += sExpenses;
+            totalSpoilage += sSpoilage;
+            totalCollected += sCollected;
+            
+            reportHtml += `
+                <tr>
+                    <td style="padding:8px; border-bottom:1px solid #16213e;">${salesman}</td>
+                    <td style="text-align:right; padding:8px; border-bottom:1px solid #16213e;">₱${sSales.toFixed(2)}</td>
+                    <td style="text-align:right; padding:8px; border-bottom:1px solid #16213e;">₱${sExpenses.toFixed(2)}</td>
+                    <td style="text-align:right; padding:8px; border-bottom:1px solid #16213e;">₱${sSpoilage.toFixed(2)}</td>
+                    <td style="text-align:right; padding:8px; border-bottom:1px solid #16213e;">₱${sCollected.toFixed(2)}</td>
+                </tr>`;
+        });
+        
+        reportHtml += `
+                    <tr style="font-weight:bold; background:#16213e;">
+                        <td style="padding:10px;">CONSOLIDATED OVERALL</td>
+                        <td style="text-align:right; padding:10px; color:#0ff;">₱${totalSales.toFixed(2)}</td>
+                        <td style="text-align:right; padding:10px; color:#ff6b6b;">₱${totalExpenses.toFixed(2)}</td>
+                        <td style="text-align:right; padding:10px; color:#f39c12;">₱${totalSpoilage.toFixed(2)}</td>
+                        <td style="text-align:right; padding:10px; color:#00ff88;">₱${totalCollected.toFixed(2)}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>`;
+        
+        const reportDiv = document.getElementById('report-output-container');
+        if (reportDiv) reportDiv.innerHTML = reportHtml;
+    }
+    
+    function exportReport() {
+        const container = document.getElementById('report-output-container');
+        if (!container || !container.innerText) { showMessage('Error', 'No statement data to deploy into system export buffers'); return; }
+        const blob = new Blob([container.innerText], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `BusinessReport_${reportType}_${currentDate}.txt`;
+        link.click();
+        showMessage('Success', 'Statement text exported onto file system infrastructure layers');
+    }
+    
+    // ============= DATABASE & SYSTEM MANAGEMENT TAB FUNCTIONS =============
+    async function viewDatabaseStats() {
+        const stats = {
+            sales: loadData(STORAGE_KEYS.SALES).length,
+            expenses: loadData(STORAGE_KEYS.EXPENSES).length,
+            spoilage: loadData(STORAGE_KEYS.SPOILAGE).length,
+            collections: loadData(STORAGE_KEYS.COLLECTIONS).length,
+            receivables: loadData(STORAGE_KEYS.RECEIVABLES).length
+        };
+        
+        const statsGrid = document.getElementById('database-stats-output-grid');
+        if (statsGrid) {
+            statsGrid.innerHTML = `
+                <div class="stat-card"><div class="number">${stats.sales}</div><div class="label">Sales Entries</div></div>
+                <div class="stat-card"><div class="number">${stats.expenses}</div><div class="label">Expenses Logged</div></div>
+                <div class="stat-card"><div class="number">${stats.spoilage}</div><div class="label">Spoilage pack entries</div></div>
+                <div class="stat-card"><div class="number">${stats.collections}</div><div class="label">Collections Audited</div></div>
+                <div class="stat-card"><div class="number">${stats.receivables}</div><div class="label">Receivable records</div></div>`;
+        }
+    }
+    
+    function exportDatabase() {
+        const backup = {};
+        Object.keys(STORAGE_KEYS).forEach(k => { backup[STORAGE_KEYS[k]] = loadData(STORAGE_KEYS[k]); });
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `SalesSystem_Backup_${getToday()}.json`;
+        link.click();
+        showMessage('Success', 'Full offline state configuration JSON structural archive downloaded');
+    }
+    
+    function importDatabase(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const parsed = JSON.parse(e.target.result);
+                Object.keys(parsed).forEach(k => { localStorage.setItem(k, JSON.stringify(parsed[k])); });
+                showMessage('Import Complete', 'System storage runtime indices state successfully synchronized from JSON layout payload');
+                refreshAll();
+            } catch(err) {
+                showMessage('Error', 'Invalid data model architecture schema format constraints detected', true);
+            }
+        };
+        reader.readAsText(file);
+    }
+    
+    function clearAllData() {
+        if (confirm('CRITICAL SYSTEM RESET OPERATION. Clear local business transactional records?')) {
+            Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
+            showMessage('Reset Completed', 'Runtime structures restored onto clean environmental initialization baselines');
+            refreshAll();
+        }
+    }
+    
+    async function showAddMarketModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>Add New System Market Cluster</h3>
+                <input type="text" id="modal-market-name" placeholder="Enter Market Name (e.g., Mandaue)">
+                <button class="primary" onclick="addMarketFromModal(this)">Save Market Area</button>
+                <button onclick="this.closest('.modal').remove()">Cancel</button>
+            </div>`;
+        document.body.appendChild(modal);
+    }
+    
+    async function addMarketFromModal(btn) {
+        const mInput = document.getElementById('modal-market-name');
+        if (mInput && mInput.value.trim()) {
+            const added = addNewMarket(mInput.value.trim());
+            if (added) {
+                btn.closest('.modal').remove();
+                await initializeMarketSelectors();
+                showMessage('Success', 'New route territory registered into system parameters');
+            } else {
+                showMessage('Warning', 'Market route tag signature configuration conflicts detected');
+            }
+        }
+    }
+    
+    async function showAddCustomerModal() {
+        const currentM = document.getElementById('sale-market').value;
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>Add Customer Account Layout</h3>
+                <p style="font-size:11px; margin-bottom:10px;">Target Cluster: <strong style="color:#0ff;">${currentM}</strong></p>
+                <input type="text" id="modal-customer-name" placeholder="Enter Customer Name">
+                <button class="primary" onclick="addCustomerFromModal(this, '${currentM}')">Attach Account Profile</button>
+                <button onclick="this.closest('.modal').remove()">Cancel</button>
+            </div>`;
+        document.body.appendChild(modal);
+    }
+    
+    async function addCustomerFromModal(btn, market) {
+        const cInput = document.getElementById('modal-customer-name');
+        if (cInput && cInput.value.trim()) {
+            const added = addNewCustomer(market, cInput.value.trim());
+            if (added) {
+                btn.closest('.modal').remove();
+                await updateCustomerList();
+                showMessage('Success', `Account tied explicitly into ${market} routing matrices`);
+            } else {
+                showMessage('Warning', 'Identical structural entity match collision logged');
+            }
+        }
+    }
+    
+    // ============= SYSTEM TAB SWITCHING CORE LOGIC =============
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        const targetPane = document.getElementById(tabId);
+        if (targetPane) targetPane.classList.add('active');
+        
+        const targetBtn = document.querySelector(`button[onclick="switchTab('${tabId}')"]`);
+        if (targetBtn) targetBtn.classList.add('active');
+        
+        if (tabId === 'tab-sales') refreshSalesDisplay();
+        else if (tabId === 'tab-expenses') refreshExpensesDisplay();
+        else if (tabId === 'tab-spoilage') refreshSpoilageDisplay();
+        else if (tabId === 'tab-collection') { updateCollectionTotal(); refreshCollectionsDisplay(); }
+        else if (tabId === 'tab-receivables') { updateReceivableNameOptions(); refreshReceivablesDisplay(); }
+        else if (tabId === 'tab-reports') generateReport();
+        else if (tabId === 'tab-management') viewDatabaseStats();
+    }
+    
+    async function refreshAll() {
+        await refreshSalesDisplay();
+        await refreshExpensesDisplay();
+        await refreshSpoilageDisplay();
+        await updateCollectionTotal();
+        await refreshCollectionsDisplay();
+        await refreshReceivablesDisplay();
+        await viewDatabaseStats();
+        await updateSummaryBar();
+    }
+    
+    async function updateSummaryBar() {
+        const sales = loadData(STORAGE_KEYS.SALES).filter(s => s.date === currentDate && s.salesman === currentSalesman);
+        const expenses = loadData(STORAGE_KEYS.EXPENSES).filter(e => e.date === currentDate && e.salesman === currentSalesman);
+        const spoilage = loadData(STORAGE_KEYS.SPOILAGE).filter(s => s.date === currentDate && s.salesman === currentSalesman);
+        
+        const tSales = sales.reduce((sum, s) => sum + (s.price * s.qty), 0);
+        const tExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+        const tLoss = spoilage.reduce((sum, s) => sum + s.total_loss, 0);
+        const netCash = tSales - tExpenses - tLoss;
+        
+        const sumBar = document.getElementById('global-app-summary-bar');
+        if (sumBar) {
+            sumBar.innerHTML = `
+                <div class="summary-text">
+                    Profile: <span style="color:#0ff">${currentSalesman}</span> &nbsp;|&nbsp; 
+                    Sales: <span style="color:#ff0">₱${tSales.toFixed(2)}</span> &nbsp;|&nbsp; 
+                    Expenses: <span style="color:#ff6b6b">₱${tExpenses.toFixed(2)}</span> &nbsp;|&nbsp; 
+                    Loss: <span style="color:#f39c12">₱${tLoss.toFixed(2)}</span> &nbsp;|&nbsp; 
+                    Expected Cash Flow: <span style="color:#00ff88">₱${netCash.toFixed(2)}</span>
+                </div>
+                <div style="font-size:10px; color:#aaa;">System Secure Cloud Access Engine Engine (v2.4)</div>`;
+        }
+    }
+    
+    async function initializeMarketSelectors() {
+        const mSelect = document.getElementById('sale-market');
+        if (!mSelect) return;
+        mSelect.innerHTML = '';
+        getAllMarkets().forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m;
+            opt.textContent = m;
+            mSelect.appendChild(opt);
+        });
+        await updateCustomerList();
+    }
+    
+    // ============= SECURE USER PROFILE ACCESS LAYER =============
+    function handleLogin() {
+        const u = document.getElementById('login-username').value.trim();
+        const p = document.getElementById('login-password').value;
+        
+        const userPool = loadData(STORAGE_KEYS.USERS);
+        let matchedUser = null;
+        
+        if (defaultUsers[u] && defaultUsers[u].password === btoa(p)) {
+            matchedUser = defaultUsers[u];
+        } else {
+            const runtimeFind = userPool.find(item => item.username === u && item.password === btoa(p));
+            if (runtimeFind) matchedUser = { role: runtimeFind.role, name: runtimeFind.username };
+        }
+        
+        if (matchedUser) {
+            currentUser = matchedUser.name;
+            userRole = matchedUser.role;
+            currentSalesman = userRole === 'admin' ? 'Jay' : currentUser;
+            
+            document.getElementById('login-overlay-container').style.display = 'none';
+            renderAppLayout();
+            initializeMarketSelectors();
+            updateAllDateDisplays();
+            refreshAll();
+            showMessage('Welcome Back', `Authenticated user context session signed onto profile: ${currentUser}`);
+        } else {
+            alert('Invalid verification criteria matching patterns');
+        }
+    }
+    
+    function logout() {
+        currentUser = null;
+        userRole = null;
+        document.getElementById('app').innerHTML = '';
+        document.getElementById('login-overlay-container').style.display = 'flex';
+        document.getElementById('login-password').value = '';
+    }
+    
+    function showHelp() {
+        showMessage('Operational System Help Documentation', `
+            1. Use Global Date Picker component layout layers to select specific calendar framework timeline operational records.
+            2. Cash variance balances track collections calculated accurately against active transactional inputs.
+            3. Data backups match explicit structure JSON constraints and support offline ledger persistence mapping paradigms perfectly.
+        `, false, 6000);
+    }
+    
+    // ============= USER INTERFACE RENDER COMPONENT CONTEXTS =============
+    function renderAppLayout() {
+        let adminControlsHtml = '';
+        if (userRole === 'admin') {
+            adminControlsHtml = `
+                <div class="form-row" style="margin-left: auto;">
+                    <label style="min-width:auto; color:#ff0;">Salesman Stream Focus:</label>
+                    <select id="sale-salesman-select" onchange="updateSalesmanView()" style="background:#16213e; border-color:#0ff;">
+                        <option value="Jay" ${currentSalesman === 'Jay' ? 'selected' : ''}>Jay</option>
+                        <option value="Vener" ${currentSalesman === 'Vener' ? 'selected' : ''}>Vener</option>
+                        <option value="Paolo" ${currentSalesman === 'Paolo' ? 'selected' : ''}>Paolo</option>
+                    </select>
+                </div>`;
+        }
+
+        document.getElementById('app').innerHTML = `
+            <div class="app-container">
+                <div style="background:#16213e; padding:10px 15px; display:flex; align-items:center; border-bottom:1px solid #0f3460; flex-wrap:wrap; gap:10px;">
+                    <div style="display:flex; align-items:center;">
+                        <span class="sync-status sync-online"></span>
+                        <h2 style="font-size:16px; color:#0ff; letter-spacing:1px;">PAR FOODS SALES PLATFORM</h2>
+                    </div>
+                    
+                    <div class="date-picker-wrapper" style="margin-left:20px;">
+                        <label style="font-size:12px; color:#aaa;">Target System Date Frame:</label>
+                        <input type="date" id="global-date-picker" onchange="onDateChange()">
+                        <span class="date-badge today-badge">✅ TODAY</span>
+                    </div>
+                    
+                    ${adminControlsHtml}
+                    
+                    <div style="margin-left:auto; display:flex; gap:8px;">
+                        <button class="info" onclick="showHelp()" style="padding:6px 12px; font-size:12px;">💡 System Manual</button>
+                        <button class="danger" onclick="logout()" style="padding:6px 12px; font-size:12px;">🔒 Sign Out</button>
+                    </div>
+                </div>
+
+                <div class="tab-bar">
+                    <button class="tab-btn active" onclick="switchTab('tab-sales')">🛒 Sales Ledger</button>
+                    <button class="tab-btn" onclick="switchTab('tab-expenses')">💸 Operational Expenses</button>
+                    <button class="tab-btn" onclick="switchTab('tab-spoilage')">📉 Spoilage Logs</button>
+                    <button class="tab-btn" onclick="switchTab('tab-collection')">💰 Cash Auditing</button>
+                    <button class="tab-btn" onclick="switchTab('tab-receivables')">📋 Receivables (Utang)</button>
+                    <button class="tab-btn" onclick="switchTab('tab-reports')">📊 Analytical Statements</button>
+                    <button class="tab-btn" onclick="switchTab('tab-management')">⚙️ System Configuration</button>
+                </div>
+
+                <div class="tab-content">
+                    <div id="tab-sales" class="tab-pane active">
+                        <div class="card">
+                            <h3>Record Sales Transaction Entry Form</h3>
+                            <div class="form-row">
+                                <label>Market Route:</label>
+                                <select id="sale-market" onchange="updateCustomerList()" style="width:180px;"></select>
+                                <button onclick="showAddMarketModal()">➕ Add New Route Territory Area</button>
+                            </div>
+                            <div class="form-row">
+                                <label>Customer Node:</label>
+                                <select id="sale-customer" style="width:180px;"></select>
+                                <button onclick="showAddCustomerModal()">➕ Link New Customer Account Element</button>
+                            </div>
+                            <div class="form-row">
+                                <label>Product Stack:</label>
+                                <select id="sale-product" onchange="updateProductPrice()" style="width:180px;">
+                                    <option value="Fresh Noodles(5kg)">Fresh Noodles (5kg)</option>
+                                    <option value="Fresh Noodles(1kg)">Fresh Noodles (1kg)</option>
+                                    <option value="Canton(500gm)">Canton (500gm)</option>
+                                    <option value="Canton(1kg)">Canton (1kg)</option>
+                                    <option value="Odong">Odong</option>
+                                    <option value="Misua">Misua</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label>Unit Price Value:</label>
+                                <input type="number" id="sale-price" value="190" style="width:100px;">
+                                <label style="margin-left:20px;">Qty Issued Vol:</label>
+                                <input type="number" id="sale-qty" value="0" style="width:100px;">
+                            </div>
+                            <button id="save-sale-btn" class="primary" onclick="addOrUpdateSale()" style="margin-top:10px; padding:10px 20px;">💾 SAVE TRANSACTION ENTRY</button>
+                        </div>
+                        
+                        <div class="card">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <h3>Active Sales Data Logs Grid (<span class="current-date-display"></span>)</h3>
+                                <div id="sales-total-display" style="font-size:14px; color:#ff0;">Total Sales: ₱0.00</div>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Customer Node Profile</th>
+                                            <th>Product Identity</th>
+                                            <th>Volume Units</th>
+                                            <th>Gross Price Total</th>
+                                            <th>Management Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sales-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-expenses" class="tab-pane">
+                        <div class="card">
+                            <h3>Log Operational Route Incurred Expense</h3>
+                            <div class="form-row">
+                                <label>Category:</label>
+                                <select id="expense-type" onchange="updateExpenseItems()" style="width:150px;">
+                                    <option value="Delivery">Delivery / Route Truck Items</option>
+                                    <option value="Incurred">Incurred / Internal Process Items</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label>Item Node Tag:</label>
+                                <select id="expense-item" style="width:180px;"></select>
+                            </div>
+                            <div class="form-row">
+                                <label>Amount Cost (₱):</label>
+                                <input type="number" id="expense-amount" placeholder="0.00" style="width:120px;">
+                            </div>
+                            <button class="primary" onclick="addExpense()" style="margin-top:10px;">💾 SAVE EXPENSE ROW</button>
+                        </div>
+                        
+                        <div class="card">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <h3>Logged Expense Balancing Indices Grid</h3>
+                                <div id="expenses-total" style="font-size:14px; color:#ff6b6b;">Total Expenses: ₱0.00</div>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Classification Structure</th>
+                                            <th>System Item Tag</th>
+                                            <th>Financial Value Matrix</th>
+                                            <th>Logged Date</th>
+                                            <th>Action Operations</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="expenses-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-spoilage" class="tab-pane">
+                        <div class="card">
+                            <h3>Log Return Inventory Pack Damaged/Spoilage Fields</h3>
+                            <div class="form-row">
+                                <label>Product Type:</label>
+                                <select id="spoilage-product" style="width:200px;">
+                                    <option value="Fresh Noodles(5kg)">Fresh Noodles (5kg)</option>
+                                    <option value="Fresh Noodles(1kg)">Fresh Noodles (1kg)</option>
+                                    <option value="Canton(500gm)">Canton (500gm)</option>
+                                    <option value="Canton(1kg)">Canton (1kg)</option>
+                                    <option value="Odong">Odong</option>
+                                    <option value="Misua">Misua</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label>Packs Count:</label>
+                                <input type="number" id="spoilage-qty" value="0" style="width:100px;">
+                                <label style="margin-left:20px;">Cost Per Pack Structure (₱):</label>
+                                <input type="number" id="spoilage-cost" value="10" style="width:100px;">
+                            </div>
+                            <div class="form-row">
+                                <label>Reason/Note:</label>
+                                <input type="text" id="spoilage-reason" placeholder="e.g., Moldy, Broken seal packaging defects" style="width:350px;">
+                            </div>
+                            <button class="primary" onclick="addSpoilage()" style="margin-top:10px;">📉 LOG PRODUCTION SPOILAGE</button>
+                        </div>
+                        
+                        <div class="card">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <h3>Spoiled/Damaged Asset Tracking Array Indices Grid</h3>
+                                <div style="display:flex; gap:20px; font-size:13px;">
+                                    <span id="total-spoilage-qty" style="color:#aaa;">Total Spoilage Vol: 0 packs</span>
+                                    <span id="total-spoilage-loss" style="color:#ff6b6b; font-weight:bold;">Total Capital Variance Loss: ₱0.00</span>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Product Target</th>
+                                            <th>Volume Packs</th>
+                                            <th>Financial Value Impact</th>
+                                            <th>Contextual Assessment Note Description</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="spoilage-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-collection" class="tab-pane">
+                        <div class="card">
+                            <h3>Physical Cash Denomination Count Input Audit Desk</h3>
+                            <div class="denom-grid">
+                                ${denominations.map(d => `
+                                    <div class="denom-item">
+                                        <label>₱${d}</label>
+                                        <input type="number" id="denom-${d}" value="0" min="0" oninput="updateCollectionTotal()">
+                                    </div>
+                                `).join('')}
+                            </div>
+                            
+                            <div class="form-row" style="margin-top:15px; gap:20px;">
+                                <button class="success" onclick="saveCollectionHandler()" style="padding:10px 25px; font-weight:bold;">💾 COMMIT AUDITED CASH COLLECTION</button>
+                                <button class="warning" onclick="resetCollection()">🧹 Clear Workspace Fields</button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Financial Variance Matrix Discrepancy Reconciliation Indicators</h3>
+                            <div class="collection-summary">
+                                <div id="total-collected" style="font-size:18px; font-weight:bold; color:#00ff88;">💰 TOTAL AUDITED COLLECTION SUM: ₱0.00</div>
+                                <div id="expected-cash" style="font-size:14px; color:#ccc; margin-top:10px;">📊 Expected Cash Flow (Formulaic): ₱0.00</div>
+                                <div id="spoilage-deduction" style="font-size:12px; color:#ff6b6b;">📉 Outward Asset Damage Write-Off Deduction: ₱0.00</div>
+                                <hr style="border:none; border-top:1px solid #1f3a5f; margin:10px 0;">
+                                <div id="difference" style="font-size:15px; font-weight:bold;">Discrepancy Drift Variance Balance: ₱0.00</div>
+                                <div id="collection-status" style="font-size:16px; font-weight:bold; margin-top:5px;">System Security Compliance Evaluation: STATUS CALCULATION DELAYED</div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>Audit Log Stream Registry Summary Matrix</h3>
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Target Process Log Date</th>
+                                            <th>Audited Cash Evaluation Total Sum</th>
+                                            <th>Committed Timestamp</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="collections-table-body"></tbody>
+                                end</table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-receivables" class="tab-pane">
+                        <div class="card">
+                            <h3>Create Running Balance Ledger Accounts Accountable Document Row</h3>
+                            <div class="form-row">
+                                <label>Account Class:</label>
+                                <select id="receivable-type" onchange="updateReceivableNameOptions()" style="width:150px;">
+                                    <option value="CUSTOMER">CUSTOMER REGULAR CREDIT UTANG</option>
+                                    <option value="SALESMAN">SALESMAN PROFILE DEFICIT SHORTAGE</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label>Target Profile:</label>
+                                <select id="receivable-name" onchange="handleReceivableNameChange()" style="width:250px;"></select>
+                            </div>
+                            <div class="form-row">
+                                <label>Value Owed (₱):</label>
+                                <input type="number" id="receivable-amount" placeholder="0.00" style="width:120px;">
+                            </div>
+                            <div class="form-row">
+                                <label>Context Notes:</label>
+                                <input type="text" id="receivable-notes" placeholder="Enter explicit reason definitions for credit extension mapping models" style="width:400px;">
+                            </div>
+                            <button class="primary" onclick="addReceivable()" style="margin-top:10px;">💾 DEPLOY ACCOUNT RECEIVABLE LEDGER RECORD</button>
+                        </div>
+                        
+                        <div class="card">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <h3>Outstanding Credit Asset Ledger Matrix System Streams</h3>
+                                <div id="total-receivables" style="font-size:14px; color:#ff6b6b;">Total Unpaid Framework Balance: ₱0.00</div>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tracking Date</th>
+                                            <th>Classification</th>
+                                            <th>Profile Name Signature</th>
+                                            <th>Principal Owed</th>
+                                            <th>Amortized Collections Paid</th>
+                                            <th>Running Ledger Balance</th>
+                                            <th>Notes context documentation</th>
+                                            <th>Operational Status</th>
+                                            <th>Manage Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="receivables-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-reports" class="tab-pane">
+                        <div class="card">
+                            <h3>Analytical Statement Matrix Parameters Console</h3>
+                            <div class="form-row" style="gap:15px;">
+                                <label>Framework Strategy Range Select:</label>
+                                <select id="report-type-toggle" onchange="toggleReportType()">
+                                    <option value="daily">Daily Cluster Loop Isolation Focus Mode</option>
+                                    <option value="monthly">Monthly Aggregate Global Business Performance Matrix Mode</option>
+                                </select>
+                                
+                                <div id="daily-report-selectors" class="inline-add">
+                                    <label>Date Filter Framework Target:</label>
+                                    <input type="date" id="report-date" onchange="setReportDate(this.value)">
+                                </div>
+                                
+                                <div id="monthly-report-selectors" class="inline-add" style="display:none;">
+                                    <label>Month Target Grid:</label>
+                                    <select id="report-month" onchange="setReportMonth(this.value)">
+                                        ${['January','February','March','April','May','June','July','August','September','October','November','December'].map((m,idx)=>`<option value="${idx}" ${idx===(new Date().getMonth())?'selected':''}>${m}</option>`).join('')}
+                                    </select>
+                                    <select id="report-year" onchange="setReportYear(this.value)">
+                                        <option value="2026" selected>2026</option>
+                                        <option value="2025">2025</option>
+                                    </select>
+                                </div>
+                                
+                                <button class="info" onclick="exportReport()" style="margin-left:auto;">📥 Download Active Data Output File Stream (.txt)</button>
+                            </div>
+                        </div>
+                        
+                        <div id="report-output-container"></div>
+                    </div>
+
+                    <div id="tab-management" class="tab-pane">
+                        <div class="card">
+                            <h3>Local Storage Layout Storage Capacity Evaluation Matrices</h3>
+                            <div id="database-stats-output-grid" class="db-stats-grid"></div>
+                            <button onclick="viewDatabaseStats()">📊 Trigger Active Index Engine Recalculation Audit</button>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>Core System Management & Infrastructure Utility Protocols</h3>
+                            <p style="font-size:11px; color:#aaa; margin-bottom:15px;">Manage raw engine states manually using low-level database actions if required:</p>
+                            <div class="db-actions">
+                                <button class="info" onclick="exportDatabase()">📤 Backup full business data architecture file stream (JSON)</button>
+                                <label class="file-input-label">
+                                    📥 Restore structural dataset context registry array map allocation layout
+                                    <input type="file" accept=".json" onchange="importDatabase(event)">
+                                </label>
+                                <button class="danger" onclick="clearAllData()">⚠️ Execute master terminal wipe override cleanup sequence</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="global-app-summary-bar" class="summary-bar"></div>
+            </div>`;
+            
+        updateExpenseItems();
+    }
+
+    // ============= SECURE ACCESS SCREEN OVERRIDE CONTAINER =============
+    const loginOverlay = document.createElement('div');
+    loginOverlay.id = 'login-overlay-container';
+    loginOverlay.className = 'login-overlay';
+    loginOverlay.innerHTML = `
+        <div class="login-box">
+            <h2>PAR FOODS SECURE INBOUND APPARATUS GATEWAY</h2>
+            <p style="font-size:11px; color:#aaa; margin-bottom:15px;">Verify credentials context allocation signature structures to interact</p>
+            <input type="text" id="login-username" placeholder="Username / ID Profile Handle Signature">
+            <input type="password" id="login-password" placeholder="System Encryption Access Keycode">
+            <button class="success" onclick="handleLogin()">🔓 TRANSMIT VERIFICATION METRICS</button>
+        </div>`;
+    document.body.appendChild(loginOverlay);
+</script>
+</body>
+</html>
